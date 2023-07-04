@@ -71,5 +71,6 @@ To get started with development:
 ```sh
 git clone https://github.com/nick322/secure-spreadsheet.git
 cd secure-spreadsheet
+composer install
 ./secure-spreadsheet
 ```
