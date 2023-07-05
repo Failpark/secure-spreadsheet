@@ -155,15 +155,7 @@ class Encrypt
 
         /* Key Encryption */
         $password = $this->password;
-        // Convert the password to an encryption key
-        $key = $this->_convertPasswordToKey(
-            $password,
-            $encryptionInfo['key']['hashAlgorithm'],
-            $encryptionInfo['key']['saltValue'],
-            $encryptionInfo['key']['spinCount'],
-            $encryptionInfo['key']['keyBits'],
-            $this->BLOCK_KEYS['key']
-        );
+        list($key, $verifierHashInputKey, $verifierHashValueKey) = $this->from_password($password, $encryptionInfo);
 
         // // Encrypt the package key with the
         $encryptionInfo['key']['encryptedKeyValue'] = $this->_crypt(
@@ -181,16 +173,6 @@ class Encrypt
         $verifierHashInput = random_bytes(16);
         $verifierHashInput = unpack('C*', $verifierHashInput);
 
-        // Create an encryption key from the password for the input
-        $verifierHashInputKey = $this->_convertPasswordToKey(
-            $password,
-            $encryptionInfo['key']['hashAlgorithm'],
-            $encryptionInfo['key']['saltValue'],
-            $encryptionInfo['key']['spinCount'],
-            $encryptionInfo['key']['keyBits'],
-            $this->BLOCK_KEYS['verifierHash']['input']
-        );
-
         // Use the key to encrypt the verifier input
         $encryptionInfo['key']['encryptedVerifierHashInput'] = $this->_crypt(
             true,
@@ -204,16 +186,6 @@ class Encrypt
 
         // Create a hash of the input
         $verifierHashValue = $this->_hash($encryptionInfo['key']['hashAlgorithm'], $verifierHashInput);
-
-        // Create an encryption key from the password for the hash
-        $verifierHashValueKey = $this->_convertPasswordToKey(
-            $password,
-            $encryptionInfo['key']['hashAlgorithm'],
-            $encryptionInfo['key']['saltValue'],
-            $encryptionInfo['key']['spinCount'],
-            $encryptionInfo['key']['keyBits'],
-            $this->BLOCK_KEYS['verifierHash']['value']
-        );
 
         // Use the key to encrypt the hash value
         $encryptionInfo['key']['encryptedVerifierHashValue'] = $this->_crypt(
@@ -249,6 +221,40 @@ class Encrypt
         $root->save($filePath);
 
         return file_get_contents($filePath);
+    }
+
+    private function from_password($password, $encryptionInfo) {
+        // Convert the password to an encryption key
+        $key = $this->_convertPasswordToKey(
+            $password,
+            $encryptionInfo['key']['hashAlgorithm'],
+            $encryptionInfo['key']['saltValue'],
+            $encryptionInfo['key']['spinCount'],
+            $encryptionInfo['key']['keyBits'],
+            $this->BLOCK_KEYS['key']
+        );
+
+        // Create an encryption key from the password for the input
+        $verifierHashInputKey = $this->_convertPasswordToKey(
+            $password,
+            $encryptionInfo['key']['hashAlgorithm'],
+            $encryptionInfo['key']['saltValue'],
+            $encryptionInfo['key']['spinCount'],
+            $encryptionInfo['key']['keyBits'],
+            $this->BLOCK_KEYS['verifierHash']['input']
+        );
+
+        // Create an encryption key from the password for the hash
+        $verifierHashValueKey = $this->_convertPasswordToKey(
+            $password,
+            $encryptionInfo['key']['hashAlgorithm'],
+            $encryptionInfo['key']['saltValue'],
+            $encryptionInfo['key']['spinCount'],
+            $encryptionInfo['key']['keyBits'],
+            $this->BLOCK_KEYS['verifierHash']['value']
+        );
+
+        return [$key, $verifierHashInputKey, $verifierHashValueKey];
     }
 
 
